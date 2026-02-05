@@ -1,5 +1,5 @@
 # 使用 NVIDIA 提供的官方开发镜像作为基础，确保 CUDA 12.6 环境完整
-FROM nvidia/cuda:12.6.3-devel-ubuntu22.04
+FROM registry.cn-hangzhou.aliyuncs.com/aliyun-node/nvidia-cuda:12.6.3-devel-ubuntu22.04
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive
