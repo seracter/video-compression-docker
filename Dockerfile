@@ -1,5 +1,5 @@
 # 使用 NVIDIA 提供的官方开发镜像作为基础，确保 CUDA 12.6 环境完整
-FROM registry.cn-hangzhou.aliyuncs.com/aliyun-node/nvidia-cuda:12.6.3-devel-ubuntu22.04
+FROM docker.nju.edu.cn/nvidia/cuda:12.6.3-devel-ubuntu22.04
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive
@@ -33,4 +33,5 @@ RUN grep -vE "torch|torchvision|torchaudio" requirements.txt > req_rem.txt && \
     pip install -r req_rem.txt
 
 # 设置工作目录
+
 WORKDIR /workspace
