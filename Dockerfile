@@ -1,39 +1,15 @@
-# 使用 NVIDIA 提供的官方开发镜像作为基础，确保 CUDA 12.6 环境完整
+# 依然使用这个最全的基础镜像
 FROM ac2-registry.cn-hangzhou.cr.aliyuncs.com/ac2/pytorch:2.7.1.8-cuda12.8.1-py312-alinux3.2104
 
-# 设置环境变量
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
+# 合并命令，减少镜像层数，这能大幅提升构建速度
+RUN python -m pip install --upgrade pip && \
+    python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
-# 安装 Python 和基础工具
-RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# 软链接 python
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-# 升级 pip 并设置阿里云镜像源加速
-RUN pip install --upgrade pip && \
-    pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
-
-# 关键：手动安装 PyTorch 2.6.0 + CUDA 12.6 专用版本
-# 注意：官方仓库有时还没同步最新版，需指定官方下载链接
-RUN pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
-    --index-url https://download.pytorch.org/whl/cu126
-
-# 复制并安装其他依赖
+# 拷贝依赖文件
 COPY requirements.txt .
-# 过滤掉已经手动安装过的 torch 相关包，避免冲突，然后安装剩余包
-RUN grep -vE "torch|torchvision|torchaudio" requirements.txt > req_rem.txt && \
-    pip install -r req_rem.txt
 
-# 设置工作目录
-
-WORKDIR /workspace
-
-
+# 关键优化：使用 --no-cache-dir 减少磁盘占用，并过滤掉已经存在的包
+# 这样可以避免 pip 花费大量时间去检查和下载已经有的 torch
+RUN grep -vE "torch|torchvision|torchaudio" requirements.txt > req.txt && \
+    pip install --no-cache-dir -r req.txt && \
+    rm req.txt requirements.txt
