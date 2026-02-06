@@ -1,15 +1,19 @@
-# 依然使用这个最全的基础镜像
+# 1. 使用你选中的 Alinux 基础镜像
 FROM ac2-registry.cn-hangzhou.cr.aliyuncs.com/ac2/pytorch:2.7.1.8-cuda12.8.1-py312-alinux3.2104
 
-# 合并命令，减少镜像层数，这能大幅提升构建速度
+# 2. 用 yum 安装 OpenCV 等需要的系统依赖 (Alinux 不支持 apt-get)
+RUN yum install -y mesa-libGL-devel glib2-devel git && \
+    yum clean all
+
+# 3. 配置 pip 镜像源
 RUN python -m pip install --upgrade pip && \
     python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
-# 拷贝依赖文件
+# 4. 处理依赖并安装
 COPY requirements.txt .
-
-# 关键优化：使用 --no-cache-dir 减少磁盘占用，并过滤掉已经存在的包
-# 这样可以避免 pip 花费大量时间去检查和下载已经有的 torch
-RUN grep -vE "torch|torchvision|torchaudio" requirements.txt > req.txt && \
+# 提示：过滤掉已经在基础镜像里的包，减少构建时间，防止超时
+RUN grep -vE "torch|torchvision|torchaudio|nvidia-" requirements.txt > req.txt && \
     pip install --no-cache-dir -r req.txt && \
     rm req.txt requirements.txt
+
+WORKDIR /workspace
